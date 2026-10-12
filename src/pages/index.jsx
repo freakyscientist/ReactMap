@@ -11,6 +11,7 @@ import { ErrorPage } from './Error'
 import { DataManagerPage } from './data'
 import { ResetPage } from './Reset'
 import { LocalesPage } from './locales'
+import { ShinyAccountPage } from './ShinyAccount'
 
 const Playground = React.lazy(() =>
   import('./playground').then(({ PlaygroundPage }) => ({
@@ -31,6 +32,11 @@ const loginRoute = (
 const dataRoute = (
   <Config>
     <DataManagerPage />
+  </Config>
+)
+const shinyAccountRoute = (
+  <Config>
+    <ShinyAccountPage />
   </Config>
 )
 const blockedRoute = (
@@ -55,6 +61,7 @@ export function Pages() {
       <Route path="login" element={loginRoute} />
       <Route path="data-management" element={dataRoute} />
       <Route path="locales" element={localesPage} />
+      <Route path="shiny-account" element={shinyAccountRoute} />
       <Route path="playground" element={playgroundRoute} />
       <Route path="blocked/:info" element={blockedRoute} />
       <Route path="@/:lat/:lon" element={mapRoute} />

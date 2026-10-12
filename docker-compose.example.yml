@@ -38,6 +38,9 @@ services:
       MAP_GENERAL_TITLE: ReactMap
       MAP_GENERAL_START_LAT: 0
       MAP_GENERAL_START_LON: 0
+      # Server-to-server Zorua integration; use a URL reachable from ReactMap.
+      # ZORUA_MAP_API_URL: http://zorua:4700
+      # ZORUA_MAP_API_SECRET: same value as Zorua [map].api_secret
       # ARRAY_VALUE_EXAMPLE: "[3, 4, 5]"
 
     volumes:

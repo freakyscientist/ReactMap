@@ -8,6 +8,9 @@ import TabPanel from '@mui/lab/TabPanel'
 import Tab from '@mui/material/Tab'
 import Box from '@mui/material/Box'
 import DialogContent from '@mui/material/DialogContent'
+import Button from '@mui/material/Button'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
+import { Link } from 'react-router'
 
 import { useMemory } from '@store/useMemory'
 import { useLayoutStore } from '@store/useLayoutStore'
@@ -112,6 +115,15 @@ export function UserProfile() {
             }}
           >
             <TabPanel value="profile">
+              <Button
+                component={Link}
+                to="/shiny-account"
+                startIcon={<AutoAwesome />}
+                onClick={handleClose}
+                sx={{ mb: 2 }}
+              >
+                Shiny account
+              </Button>
               <LinkAccounts />
               <ExtraUserFields refreshing={refreshing} />
               <UserBackups />
