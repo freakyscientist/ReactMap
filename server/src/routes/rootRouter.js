@@ -11,6 +11,7 @@ const { log, TAGS } = require('@rm/logger')
 const { authRouter } = require('./authRouter')
 const { clientRouter } = require('./clientRouter')
 const { apiRouter } = require('./api')
+const { shinyMapRouter } = require('./shinyMapRouter')
 const { areaPerms } = require('../utils/areaPerms')
 const { getServerSettings } = require('../utils/getServerSettings')
 const {
@@ -27,6 +28,7 @@ rootRouter.use('/', clientRouter)
 rootRouter.use('/auth', authRouter)
 
 rootRouter.use('/api/v1', secretMiddleware, apiRouter)
+rootRouter.use('/api/shiny-map', shinyMapRouter)
 
 rootRouter.get('/api/health', async (req, res) =>
   res.status(200).json({ status: 'ok' }),

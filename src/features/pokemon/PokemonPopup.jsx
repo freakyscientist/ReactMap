@@ -113,7 +113,7 @@ export function PokemonPopup({ pokemon, iconUrl, isTutorial = false }) {
   }, [])
 
   const hasLeagues = cleanPvp ? Object.keys(cleanPvp) : []
-  const hasStats = iv || cp
+  const hasStats = iv != null || cp != null
 
   const supportsShinyStats = useMemory((s) => s.featureFlags.supportsShinyStats)
   const shinyKey = React.useMemo(
@@ -247,7 +247,7 @@ export function PokemonPopup({ pokemon, iconUrl, isTutorial = false }) {
         userSettings={userSettings}
         isTutorial={isTutorial}
       />
-      {pokemon.seen_type !== 'encounter' && (
+      {pokemon.seen_type && pokemon.seen_type !== 'encounter' && (
         <Grid xs={12} textAlign="center">
           <Typography
             variant="caption"
@@ -453,7 +453,7 @@ const Stats = ({ pokemon }) => {
       justifyContent="space-around"
       alignItems="center"
     >
-      {iv !== null && (
+      {iv != null && (
         <Grid>
           <Typography variant="h5" align="center" color={getColor(iv)}>
             {iv.toFixed(2)}
@@ -461,14 +461,14 @@ const Stats = ({ pokemon }) => {
           </Typography>
         </Grid>
       )}
-      {atk_iv !== null && (
+      {atk_iv != null && (
         <Grid>
           <Typography variant="subtitle1" align="center">
             {atk_iv} | {def_iv} | {sta_iv} {inactive_stats ? '*' : ''}
           </Typography>
         </Grid>
       )}
-      {level !== null && (
+      {level != null && (
         <Grid>
           <Typography variant="subtitle1" align="center">
             {t('cp')} {cp} | {t('abbreviation_level')}

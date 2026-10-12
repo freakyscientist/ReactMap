@@ -48,6 +48,15 @@ const getGlowStatus = (pkmn, userSettings) => {
  */
 const BasePokemonTile = (pkmn) => {
   const internalId = getWildFilterId(pkmn.pokemon_id, pkmn.form)
+  const isUserShiny = useMemory(
+    (s) =>
+      s.userShinyEncounterIds.has(String(pkmn.encounter_id)) ||
+      s.userShinyEncounterIds.has(String(pkmn.id)),
+  )
+  const displayPokemon = React.useMemo(
+    () => (isUserShiny ? { ...pkmn, shiny: true } : pkmn),
+    [isUserShiny, pkmn],
+  )
 
   const [markerRef, setMarkerRef] = React.useState(null)
 
@@ -78,7 +87,7 @@ const BasePokemonTile = (pkmn) => {
     } = s.userSettings.pokemon
     return [
       pokemonTimers,
-      glow ? getGlowStatus(pkmn, s.userSettings.pokemon) : undefined,
+      glow ? getGlowStatus(displayPokemon, s.userSettings.pokemon) : undefined,
       !!(ivCircles && pkmn.iv !== null && pkmn.iv >= minIvCircle),
       !!(levelCircles && pkmn.level !== null && pkmn.level >= minLevelCircle),
       !!(pkmn.weather && weatherIndicator),
@@ -109,6 +118,8 @@ const BasePokemonTile = (pkmn) => {
         0,
         pkmn.gender,
         pkmn.costume,
+        0,
+        isUserShiny || pkmn.shiny,
       ),
       Icons.getSize('pokemon', filterSize),
       badgeId ? Icons.getMisc(badgeId) : '',
@@ -127,6 +138,7 @@ const BasePokemonTile = (pkmn) => {
   }, basicEqualFn)
 
   const manualParams = useMemory((s) => s.manualParams)
+  const markerGlow = isUserShiny ? '#FFD700' : showGlow
 
   const isNearbyStop = pkmn.seen_type === 'nearby_stop'
   const isLure = pkmn.seen_type?.includes('lure')
@@ -262,15 +274,15 @@ const BasePokemonTile = (pkmn) => {
         icon={
           Boolean(backgroundUrl) ||
           (pkmn.bestPvp !== null && pkmn.bestPvp < 4 && extras.length === 0) ||
-          showGlow ||
+          markerGlow ||
           showWeather ||
           opacity < 1 ||
           pkmn.seen_type === 'nearby_cell'
             ? fancyPokemonMarker({
-                pkmn,
+                pkmn: displayPokemon,
                 iconUrl,
                 iconSize,
-                showGlow,
+                showGlow: markerGlow,
                 showWeather,
                 badge: extras.length ? null : badge,
                 opacity,
@@ -282,7 +294,7 @@ const BasePokemonTile = (pkmn) => {
         eventHandlers={{ popupopen: handlePopupOpen }}
       >
         <Popup position={finalLocation}>
-          <PokemonPopup pokemon={pkmn} iconUrl={iconUrl} />
+          <PokemonPopup pokemon={displayPokemon} iconUrl={iconUrl} />
         </Popup>
         {(showTimer || timerOverride || extras.length > 0) && (
           <TooltipWrapper
@@ -334,5 +346,26 @@ const BasePokemonTile = (pkmn) => {
 
 export const PokemonTile = React.memo(
   BasePokemonTile,
-  (prev, next) => prev.updated === next.updated,
+  (prev, next) =>
+    prev.updated === next.updated &&
+    prev.pokemon_id === next.pokemon_id &&
+    prev.display_pokemon_id === next.display_pokemon_id &&
+    prev.lat === next.lat &&
+    prev.lon === next.lon &&
+    prev.form === next.form &&
+    prev.costume === next.costume &&
+    prev.gender === next.gender &&
+    prev.move_1 === next.move_1 &&
+    prev.move_2 === next.move_2 &&
+    prev.weather === next.weather &&
+    prev.size === next.size &&
+    prev.first_seen_timestamp === next.first_seen_timestamp &&
+    prev.bestPvp === next.bestPvp &&
+    prev.iv === next.iv &&
+    prev.atk_iv === next.atk_iv &&
+    prev.def_iv === next.def_iv &&
+    prev.sta_iv === next.sta_iv &&
+    prev.cp === next.cp &&
+    prev.level === next.level &&
+    prev.shiny === next.shiny,
 )

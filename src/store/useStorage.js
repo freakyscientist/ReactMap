@@ -40,6 +40,7 @@ import { setDeep } from '@utils/setDeep'
  *   tutorial: boolean,
  *   searchTab: string,
  *   search: string,
+ *   showShiniesOnly: boolean,
  *   filters: Partial<import('@utils/filterSelection').StoredFilters>,
  *   icons: Record<string, string>
  *   audio: Record<string, string>
@@ -68,6 +69,7 @@ export const useStorage = create(
         CONFIG.map.general.startLon || 0,
       ],
       zoom: CONFIG.map.general.startZoom,
+      showShiniesOnly: false,
       filters: {},
       setAreas: (areas = [], validAreas = [], unselectAll = false) => {
         const { filters } = get()

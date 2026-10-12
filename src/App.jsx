@@ -17,6 +17,7 @@ import { setLoadingText } from '@utils/setLoadingText'
 import '@services/events'
 import { ErrorBoundary } from '@components/ErrorBoundary'
 import { HolidayEffects } from '@features/holiday'
+import { useShinyMapFeed } from '@hooks/useShinyMapFeed'
 
 import { Pages } from './pages'
 
@@ -46,6 +47,7 @@ function SetText() {
 
 export function App() {
   const theme = useCustomTheme()
+  useShinyMapFeed()
 
   const isValid = isLocalStorageEnabled()
 

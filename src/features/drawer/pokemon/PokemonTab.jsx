@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { XXS_XXL, NUNDO_HUNDO } from '@assets/constants'
 import { TabPanel } from '@components/TabPanel'
 import { GenderListItem } from '@components/filters/Gender'
-import { DualBoolToggle } from '@components/inputs/BoolToggle'
+import { BoolToggle, DualBoolToggle } from '@components/inputs/BoolToggle'
 import { PokemonSlider } from './PokemonSlider'
 
 /**
@@ -44,6 +44,7 @@ export function PokemonTabPanel({ openTab, index, sliders }) {
             <Divider sx={{ mt: 2, mb: 1 }} />
             <ListSubheader disableGutters>{t('quick_select')}</ListSubheader>
             <DualBoolToggle field="filters.pokemon" items={NUNDO_HUNDO} />
+            <BoolToggle field="showShiniesOnly" label="shinies_only" />
           </>
         )}
       </List>

@@ -47,6 +47,52 @@ const MANUAL_ID_CATEGORIES = new Set([
   'tappables',
 ])
 
+const POKEMON_RANGE_DEFAULTS = {
+  iv: [0, 100],
+  atk_iv: [0, 15],
+  def_iv: [0, 15],
+  sta_iv: [0, 15],
+  cp: [10, 5000],
+  level: [1, 55],
+}
+
+/**
+ * Match feed-only sightings against the active numeric ranges in the Pokémon menu.
+ * @param {Record<string, any>} sighting
+ * @param {Record<string, any> | undefined} pokemonFilters
+ */
+const matchesShinyFilters = (sighting, pokemonFilters) => {
+  const ranges = pokemonFilters?.ivOr || {}
+  return Object.entries(POKEMON_RANGE_DEFAULTS).every(([field, defaults]) => {
+    const range = ranges[field]
+    if (!Array.isArray(range)) return true
+    const isDefault = range[0] === defaults[0] && range[1] === defaults[1]
+    if (isDefault) return true
+
+    const value = sighting[field]
+    return typeof value === 'number' && value >= range[0] && value <= range[1]
+  })
+}
+
+/**
+ * @param {Record<string, any>} sighting
+ * @param {Record<string, any> | undefined} pokemonFilters
+ */
+const matchesQuickIvFilter = (sighting, pokemonFilters) =>
+  (pokemonFilters?.hundoIv && sighting.iv === 100) ||
+  (pokemonFilters?.zeroIv && sighting.iv === 0)
+
+/** @param {Record<string, { rank?: number | null }[]> | null | undefined} pvp */
+const getBestPvpRank = (pvp) =>
+  Object.values(pvp || {})
+    .flat()
+    .reduce((best, entry) => {
+      const rank = entry?.rank
+      return typeof rank === 'number' && Number.isFinite(rank)
+        ? Math.min(best, rank)
+        : best
+    }, 4096)
+
 /**
  * @template {keyof import('@rm/types').AllFilters} T
  * @param {import('@rm/types').AllFilters[T]} requestedFilters
@@ -117,8 +163,10 @@ function QueryData({ category, timeout }) {
   const map = useMap()
 
   const hideList = useMemory((s) => s.hideList)
+  const userShinies = useMemory((s) => s.userShinies)
   const active = useMemory((s) => s.active)
   const manualParams = useMemory((s) => s.manualParams)
+  const showShiniesOnly = useStorage((s) => s.showShiniesOnly)
 
   const userSettings = useStorage(
     (s) => s.userSettings[userSettingsCategory(category)],
@@ -145,6 +193,14 @@ function QueryData({ category, timeout }) {
     const manualCategory = normalizeCategory(manualParams.category)
     return manualCategory === normalizedCategory ? manualParams.id : undefined
   }, [manualParams, normalizedCategory])
+  const isManualShiny = useMemory(
+    (s) =>
+      normalizedCategory === 'pokemon' &&
+      manualId !== undefined &&
+      s.userShinies.some(
+        (sighting) => String(sighting.encounterId) === String(manualId),
+      ),
+  )
 
   const buildVariables = React.useCallback(() => {
     const args = getQueryArgs()
@@ -154,14 +210,27 @@ function QueryData({ category, timeout }) {
       category,
       onlyAreas,
     )
-    if (manualId && MANUAL_ID_CATEGORIES.has(normalizedCategory)) {
+    if (
+      manualId &&
+      MANUAL_ID_CATEGORIES.has(normalizedCategory) &&
+      !(isManualShiny && !showShiniesOnly)
+    ) {
       trimmedFilters.onlyManualId = manualId
     }
     return {
       ...args,
       filters: trimmedFilters,
     }
-  }, [filters, userSettings, category, onlyAreas, manualId, normalizedCategory])
+  }, [
+    filters,
+    userSettings,
+    category,
+    onlyAreas,
+    manualId,
+    normalizedCategory,
+    isManualShiny,
+    showShiniesOnly,
+  ])
 
   const initial = React.useMemo(() => buildVariables(), [buildVariables])
   const { data, previousData, error, refetch } = useQuery(
@@ -224,7 +293,66 @@ function QueryData({ category, timeout }) {
     ) : null
   }
 
-  const filteredData = returnData.filter((each) => !hideList.has(each.id))
+  const pokemonData =
+    category === 'pokemon' && showShiniesOnly
+      ? [
+          ...returnData,
+          ...userShinies
+            .filter(
+              (sighting) =>
+                (matchesShinyFilters(
+                  sighting,
+                  /** @type {Record<string, any> | undefined} */ (filters),
+                ) ||
+                  matchesQuickIvFilter(
+                    sighting,
+                    /** @type {Record<string, any> | undefined} */ (filters),
+                  )) &&
+                !returnData.some(
+                  (pokemon) =>
+                    String(pokemon.encounter_id) === sighting.encounterId,
+                ),
+            )
+            .map((sighting) => {
+              const cleanPvp = sighting.pvp || {}
+              return {
+                id: sighting.encounterId,
+                encounter_id: sighting.encounterId,
+                spawnpoint_id: sighting.spawnpoint_id || '',
+                pokemon_id: sighting.pokemonId,
+                display_pokemon_id: sighting.display_pokemon_id ?? 0,
+                display_pokemon_form: sighting.display_pokemon_form ?? 0,
+                lat: sighting.latitude,
+                lon: sighting.longitude,
+                form: sighting.form ?? 0,
+                costume: sighting.costume ?? 0,
+                gender: sighting.gender ?? 0,
+                size: sighting.size ?? 0,
+                weight: sighting.weight ?? 0,
+                height: sighting.height ?? 0,
+                weather: sighting.weather ?? 0,
+                move_1: sighting.move_1 ?? 0,
+                move_2: sighting.move_2 ?? 0,
+                seen_type: sighting.seen_type,
+                expire_timestamp: sighting.despawnSec,
+                expire_timestamp_verified:
+                  sighting.expire_timestamp_verified ?? false,
+                first_seen_timestamp: sighting.first_seen_timestamp ?? 0,
+                updated: sighting.updated ?? 0,
+                iv: sighting.iv ?? null,
+                atk_iv: sighting.atk_iv ?? null,
+                def_iv: sighting.def_iv ?? null,
+                sta_iv: sighting.sta_iv ?? null,
+                cp: sighting.cp ?? null,
+                level: sighting.level ?? null,
+                cleanPvp,
+                shiny: true,
+                bestPvp: getBestPvpRank(cleanPvp),
+              }
+            }),
+        ]
+      : returnData
+  const filteredData = pokemonData.filter((each) => !hideList.has(each.id))
 
   if (category === 'routes') {
     return <RouteLayer routes={filteredData} />

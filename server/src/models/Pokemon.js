@@ -64,10 +64,6 @@ class Pokemon extends Model {
       }
     })
 
-    if (Object.keys(filterMap).length === 0 && mods.onlyEasyMode) {
-      // if no pokemon are present we want global filters to apply still
-      mods.onlyLinkGlobal = false
-    }
     const globalFilter = new PkmnBackend(
       'global',
       args.filters.onlyIvOr,
