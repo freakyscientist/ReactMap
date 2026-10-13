@@ -1,9 +1,11 @@
 // @ts-check
 
+const { timingSafeEqual } = require('crypto')
 const express = require('express')
 const { log, TAGS } = require('@rm/logger')
 
 const { state } = require('../services/state')
+const { filterShiniesByAreaAccess } = require('./shinyMapRouter')
 
 const zoruaRouter = express.Router()
 
@@ -27,6 +29,22 @@ function getZoruaConfig(res) {
     return null
   }
   return { url, secret }
+}
+
+function matchesSharedSecret(provided, expected) {
+  const providedBuffer = Buffer.from(provided || '')
+  const expectedBuffer = Buffer.from(expected || '')
+  return (
+    providedBuffer.length === expectedBuffer.length &&
+    providedBuffer.length > 0 &&
+    timingSafeEqual(providedBuffer, expectedBuffer)
+  )
+}
+
+function normalizeProviderID(value) {
+  if (value === undefined || value === null || value === '') return ''
+  if (typeof value !== 'string' || !/^\d{1,30}$/.test(value)) return null
+  return value
 }
 
 async function requestZorua(res, path, secret, options = {}) {
@@ -98,6 +116,99 @@ async function isCommunityMember(platform, identityId, username) {
     return isTelegramGroupMember(identityId, username)
   return false
 }
+
+zoruaRouter.post('/area-check', async (req, res) => {
+  const secret = process.env.ZORUA_MAP_API_SECRET || ''
+  if (!secret) {
+    return res
+      .status(503)
+      .json({ status: 'error', message: 'Zorua area check is not configured' })
+  }
+  if (!matchesSharedSecret(req.get('X-ReactMap-Secret'), secret)) {
+    return res
+      .status(401)
+      .json({ status: 'authError', message: 'invalid shared secret' })
+  }
+
+  const discordId = normalizeProviderID(req.body?.discordId)
+  const telegramId = normalizeProviderID(req.body?.telegramId)
+  const { latitude, longitude } = req.body || {}
+  if (
+    discordId === null ||
+    telegramId === null ||
+    (!discordId && !telegramId) ||
+    typeof latitude !== 'number' ||
+    !Number.isFinite(latitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    typeof longitude !== 'number' ||
+    !Number.isFinite(longitude) ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'provider ID and valid latitude/longitude are required',
+    })
+  }
+
+  try {
+    const sessions = await state.db.models.Session.query()
+      .select('data')
+      .where('expires', '>=', Math.floor(Date.now() / 1000))
+      .limit(2)
+      .where((query) => {
+        let hasIdentity = false
+        if (discordId) {
+          query.whereRaw(
+            "JSON_UNQUOTE(JSON_EXTRACT(data, '$.passport.user.discordId')) = ?",
+            [discordId],
+          )
+          hasIdentity = true
+        }
+        if (telegramId) {
+          query[hasIdentity ? 'orWhereRaw' : 'whereRaw'](
+            "JSON_UNQUOTE(JSON_EXTRACT(data, '$.passport.user.telegramId')) = ?",
+            [telegramId],
+          )
+        }
+      })
+
+    if (sessions.length !== 1) {
+      if (sessions.length > 1) {
+        log.warn(
+          TAGS.api,
+          'Zorua area check denied because multiple active ReactMap sessions matched',
+        )
+      }
+      return res.status(200).json({ status: 'ok', allowed: false })
+    }
+
+    const rawData = sessions[0].data
+    const sessionData =
+      typeof rawData === 'string' ? JSON.parse(rawData) : rawData
+    const user = sessionData?.passport?.user
+    const identityMatches =
+      (discordId && String(user?.discordId || '') === discordId) ||
+      (telegramId && String(user?.telegramId || '') === telegramId)
+    const areaRestrictions = user?.perms?.areaRestrictions
+    const allowed =
+      user?.perms?.map === true &&
+      identityMatches &&
+      Array.isArray(areaRestrictions) &&
+      filterShiniesByAreaAccess(
+        [{ latitude, longitude }],
+        areaRestrictions,
+      ).length === 1
+
+    return res.status(200).json({ status: 'ok', allowed })
+  } catch (error) {
+    log.error(TAGS.api, 'ReactMap Zorua area check failed', error)
+    return res
+      .status(500)
+      .json({ status: 'error', message: 'area permission check failed' })
+  }
+})
 
 zoruaRouter.post('/profile/status', async (req, res) => {
   if (!requireLogin(req, res)) return

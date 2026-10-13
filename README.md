@@ -51,6 +51,10 @@ Pokemon GO Map frontend built with React.
 - [RealDeviceMap (RDM)](https://github.com/realdevicemap/realdevicemap)
 - [Golbat](https://github.com/UnownHash/Golbat)
 
+## Zorua Shiny Integration
+
+For deployments using the Zorua shiny feed, configure `ZORUA_MAP_API_URL` and `ZORUA_MAP_API_SECRET` in the ReactMap server environment. The shared secret is server-side only. Zorua can use the same secret to call `POST /api/zorua/area-check`; ReactMap checks the active session's map permission and area restrictions at the encounter coordinates, and denies checks without exactly one matching active session.
+
 ## Installation Instructions & More
 
 - Check out the [Wiki](https://github.com/WatWowMap/ReactMap/wiki)!
