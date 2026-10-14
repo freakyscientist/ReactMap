@@ -1,6 +1,7 @@
 // @ts-check
 import * as React from 'react'
 import MenuIcon from '@mui/icons-material/Menu'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
 import MyLocationIcon from '@mui/icons-material/MyLocation'
 import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import ZoomOutIcon from '@mui/icons-material/ZoomOut'
@@ -20,6 +21,7 @@ import Fab from '@mui/material/Fab'
 import { useQuery } from '@apollo/client'
 import { useTranslation } from 'react-i18next'
 import { useMap } from 'react-leaflet'
+import { Link } from 'react-router'
 import { DomEvent } from 'leaflet'
 import CircularProgress from '@mui/material/CircularProgress'
 import { styled } from '@mui/material/styles'
@@ -155,6 +157,17 @@ export function FloatingButtons() {
           disabled={disabled}
         >
           <MenuIcon fontSize={iconSize} />
+        </Fab>
+        <Fab
+          color="primary"
+          size={fabSize}
+          component={Link}
+          to="/shiny-account"
+          title="Shiny account"
+          aria-label="Shiny account"
+          disabled={disabled}
+        >
+          <AutoAwesome fontSize={iconSize} />
         </Fab>
         {fabButtons.profileButton && (
           <Fab

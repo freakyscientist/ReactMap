@@ -19,6 +19,7 @@ const CLIENT_ROUTES = [
   '/playground',
   '/locales',
   '/data-management',
+  '/shiny-account',
   '/error',
   '/error/:message',
 ]

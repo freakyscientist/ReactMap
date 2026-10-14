@@ -59,6 +59,14 @@ For deployments using the Zorua shiny feed, configure `ZORUA_MAP_API_URL` and `Z
 
 - Check out the [Wiki](https://github.com/WatWowMap/ReactMap/wiki)!
 
+## Docker Build
+
+Build the image from the `ReactMap` directory with `docker build -t reactmap .`.
+The Dockerfile caches dependency installation separately from application
+source changes and ships only production dependencies in the runtime image.
+Keep local configuration files and generated build output out of the build
+context; `.dockerignore` handles these automatically.
+
 ## Support
 
 - Join the [Discord](https://discord.gg/EYYsKPVawn)!
