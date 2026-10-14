@@ -1709,6 +1709,20 @@
           "__format": "json"
         }
       },
+      "shinyAccount": {
+        "enabled": {
+          "__name": "AUTHENTICATION_PERMS_SHINY_ACCOUNT_ENABLED",
+          "__format": "boolean"
+        },
+        "trialPeriodEligible": {
+          "__name": "AUTHENTICATION_PERMS_SHINY_ACCOUNT_TRIAL_PERIOD_ELIGIBLE",
+          "__format": "boolean"
+        },
+        "roles": {
+          "__name": "AUTHENTICATION_PERMS_SHINY_ACCOUNT_ROLES",
+          "__format": "json"
+        }
+      },
       "pokemon": {
         "enabled": {
           "__name": "AUTHENTICATION_PERMS_POKEMON_ENABLED",

@@ -18,6 +18,10 @@ function requireLogin(req, res) {
     res.status(403).json({ status: 'error', message: 'map permission required' })
     return false
   }
+  if (!req.user.perms?.shinyAccount) {
+    res.status(403).json({ status: 'error', message: 'shiny account permission required' })
+    return false
+  }
   return true
 }
 
@@ -194,6 +198,7 @@ zoruaRouter.post('/area-check', async (req, res) => {
     const areaRestrictions = user?.perms?.areaRestrictions
     const allowed =
       user?.perms?.map === true &&
+      user?.perms?.shinyAccount === true &&
       identityMatches &&
       Array.isArray(areaRestrictions) &&
       filterShiniesByAreaAccess(

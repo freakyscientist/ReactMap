@@ -9,6 +9,7 @@ import { XXS_XXL, NUNDO_HUNDO } from '@assets/constants'
 import { TabPanel } from '@components/TabPanel'
 import { GenderListItem } from '@components/filters/Gender'
 import { BoolToggle, DualBoolToggle } from '@components/inputs/BoolToggle'
+import { useMemory } from '@store/useMemory'
 import { PokemonSlider } from './PokemonSlider'
 
 /**
@@ -22,6 +23,10 @@ import { PokemonSlider } from './PokemonSlider'
  */
 export function PokemonTabPanel({ openTab, index, sliders }) {
   const { t } = useTranslation()
+  const hasShinyAccountAccess = useMemory(
+    (s) => s.auth.perms.shinyAccount,
+  )
+
   return (
     <TabPanel value={openTab} index={index}>
       <List>
@@ -44,7 +49,9 @@ export function PokemonTabPanel({ openTab, index, sliders }) {
             <Divider sx={{ mt: 2, mb: 1 }} />
             <ListSubheader disableGutters>{t('quick_select')}</ListSubheader>
             <DualBoolToggle field="filters.pokemon" items={NUNDO_HUNDO} />
-            <BoolToggle field="showShiniesOnly" label="shinies_only" />
+            {hasShinyAccountAccess && (
+              <BoolToggle field="showShiniesOnly" label="shinies_only" />
+            )}
           </>
         )}
       </List>

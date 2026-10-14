@@ -115,15 +115,17 @@ export function UserProfile() {
             }}
           >
             <TabPanel value="profile">
-              <Button
-                component={Link}
-                to="/shiny-account"
-                startIcon={<AutoAwesome />}
-                onClick={handleClose}
-                sx={{ mb: 2 }}
-              >
-                Shiny account
-              </Button>
+              {auth.perms.shinyAccount && (
+                <Button
+                  component={Link}
+                  to="/shiny-account"
+                  startIcon={<AutoAwesome />}
+                  onClick={handleClose}
+                  sx={{ mb: 2 }}
+                >
+                  Shiny account
+                </Button>
+              )}
               <LinkAccounts />
               <ExtraUserFields refreshing={refreshing} />
               <UserBackups />

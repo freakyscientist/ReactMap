@@ -8,6 +8,9 @@ const POLL_INTERVAL_MS = 5000
 
 export const useShinyMapFeed = () => {
   const loggedIn = useMemory((s) => s.auth.loggedIn)
+  const hasShinyAccountAccess = useMemory(
+    (s) => s.auth.perms.shinyAccount,
+  )
   const discordId = useMemory((s) => s.auth.discordId)
   const telegramId = useMemory((s) => s.auth.telegramId)
 
@@ -15,7 +18,7 @@ export const useShinyMapFeed = () => {
     let stopped = false
     useMemory.setState({ userShinyEncounterIds: new Set(), userShinies: [] })
 
-    if (!loggedIn) {
+    if (!loggedIn || !hasShinyAccountAccess) {
       return () => {
         stopped = true
       }
@@ -67,5 +70,5 @@ export const useShinyMapFeed = () => {
       stopped = true
       clearInterval(interval)
     }
-  }, [discordId, loggedIn, telegramId])
+  }, [discordId, hasShinyAccountAccess, loggedIn, telegramId])
 }

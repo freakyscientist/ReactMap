@@ -123,6 +123,11 @@
         "trialPeriodEligible": false,
         "roles": []
       },
+      "shinyAccount": {
+        "enabled": true,
+        "trialPeriodEligible": false,
+        "roles": []
+      },
       "pokemon": {
         "enabled": true,
         "trialPeriodEligible": false,

@@ -75,7 +75,7 @@ export function ShinyAccountPage() {
     setLoading(true)
     setError('')
     try {
-      if (!auth.loggedIn) {
+      if (!auth.loggedIn || !auth.perms.shinyAccount) {
         setProfile(null)
         setUsers([])
         return
@@ -96,7 +96,7 @@ export function ShinyAccountPage() {
     } finally {
       setLoading(false)
     }
-  }, [auth.loggedIn, auth.perms.admin])
+  }, [auth.loggedIn, auth.perms.admin, auth.perms.shinyAccount])
 
   React.useEffect(() => {
     loadData()
@@ -206,6 +206,10 @@ export function ShinyAccountPage() {
               <Button variant="contained" href="/login">Sign in</Button>
             </Stack>
           </Paper>
+        ) : !auth.perms.shinyAccount ? (
+          <Alert severity="warning">
+            Your account does not have permission to use the Shiny account features.
+          </Alert>
         ) : loading ? (
           <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
         ) : profile?.linked ? (
@@ -268,7 +272,7 @@ export function ShinyAccountPage() {
           </Paper>
         )}
 
-        {auth.perms.admin && (
+        {auth.perms.admin && auth.perms.shinyAccount && (
           <Box>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}

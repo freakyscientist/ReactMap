@@ -53,7 +53,9 @@ Pokemon GO Map frontend built with React.
 
 ## Zorua Shiny Integration
 
-For deployments using the Zorua shiny feed, configure `ZORUA_MAP_API_URL` and `ZORUA_MAP_API_SECRET` in the ReactMap server environment. The shared secret is server-side only. Zorua can use the same secret to call `POST /api/zorua/area-check`; ReactMap checks the active session's map permission and area restrictions at the encounter coordinates, and denies checks without exactly one matching active session.
+For deployments using the Zorua shiny feed, configure `ZORUA_MAP_API_URL` and `ZORUA_MAP_API_SECRET` in the ReactMap server environment. The shared secret is server-side only. Zorua can use the same secret to call `POST /api/zorua/area-check`; ReactMap checks the active session's map and shiny-account permissions and area restrictions at the encounter coordinates, and denies checks without exactly one matching active session.
+
+Gate the Shiny Account page, friend-code management, and personalized shiny feed with `authentication.perms.shinyAccount` in `config/local.json`. Its `roles` list accepts Discord role IDs and Telegram group IDs using the same role-permission matching as other ReactMap permissions. The permission must be enabled and the account must also have map access. This does not gate general shiny odds or quest data.
 
 ## Installation Instructions & More
 

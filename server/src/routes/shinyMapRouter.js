@@ -48,6 +48,15 @@ shinyMapRouter.get('/', async (req, res) => {
       .status(403)
       .json({ status: 'error', message: 'map permission required' })
   }
+  if (!req.user.perms?.shinyAccount) {
+    log.warn(
+      TAGS.api,
+      'ReactMap shiny map feed denied: shiny account permission is missing',
+    )
+    return res
+      .status(403)
+      .json({ status: 'error', message: 'shiny account permission required' })
+  }
 
   const url = process.env.ZORUA_MAP_API_URL?.replace(/\/+$/, '')
   const secret = process.env.ZORUA_MAP_API_SECRET

@@ -100,6 +100,9 @@ export function FloatingButtons() {
 
   const isMobile = useMemory((s) => s.isMobile)
   const online = useMemory((s) => s.online)
+  const hasShinyAccountAccess = useMemory(
+    (s) => s.auth.perms.shinyAccount,
+  )
 
   const webhookMode = useWebhookStore((s) => s.mode)
 
@@ -158,17 +161,19 @@ export function FloatingButtons() {
         >
           <MenuIcon fontSize={iconSize} />
         </Fab>
-        <Fab
-          color="primary"
-          size={fabSize}
-          component={Link}
-          to="/shiny-account"
-          title="Shiny account"
-          aria-label="Shiny account"
-          disabled={disabled}
-        >
-          <AutoAwesome fontSize={iconSize} />
-        </Fab>
+        {hasShinyAccountAccess && (
+          <Fab
+            color="primary"
+            size={fabSize}
+            component={Link}
+            to="/shiny-account"
+            title="Shiny account"
+            aria-label="Shiny account"
+            disabled={disabled}
+          >
+            <AutoAwesome fontSize={iconSize} />
+          </Fab>
+        )}
         {fabButtons.profileButton && (
           <Fab
             color="primary"

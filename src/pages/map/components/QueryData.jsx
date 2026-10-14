@@ -164,9 +164,13 @@ function QueryData({ category, timeout }) {
 
   const hideList = useMemory((s) => s.hideList)
   const userShinies = useMemory((s) => s.userShinies)
+  const hasShinyAccountAccess = useMemory(
+    (s) => s.auth.perms.shinyAccount,
+  )
   const active = useMemory((s) => s.active)
   const manualParams = useMemory((s) => s.manualParams)
-  const showShiniesOnly = useStorage((s) => s.showShiniesOnly)
+  const showShiniesOnly =
+    useStorage((s) => s.showShiniesOnly) && hasShinyAccountAccess
 
   const userSettings = useStorage(
     (s) => s.userSettings[userSettingsCategory(category)],
