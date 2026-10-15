@@ -42,12 +42,17 @@ const apiRequest = async (url, options = {}) => {
     },
   })
   const payload = await response.json().catch(() => ({}))
+
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       payload.message || payload.reason || payload.error || 'Request failed',
     )
+    error.code = payload.code || ''
+    throw error
   }
+
   return payload
+
 }
 
 const dateText = (value) => (value ? new Date(value).toLocaleString() : '-')
@@ -66,6 +71,7 @@ export function ShinyAccountPage() {
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState('')
   const [notice, setNotice] = React.useState('')
+  const [accountInactive, setAccountInactive] = React.useState(false)
 
   const availablePlatforms = [
     ...(auth.discordId ? [{ id: 'discord', label: 'Discord', value: auth.discordId }] : []),
@@ -113,6 +119,7 @@ export function ShinyAccountPage() {
     event.preventDefault()
     setError('')
     setNotice('')
+    setAccountInactive(false)
     setSaving(true)
     try {
       const result = await apiRequest('/api/zorua/profile', {
@@ -128,6 +135,7 @@ export function ShinyAccountPage() {
       await loadData()
     } catch (requestError) {
       setError(requestError.message)
+      setAccountInactive(requestError.code === 'ACCOUNT_INACTIVE')
     } finally {
       setSaving(false)
     }
@@ -201,7 +209,33 @@ export function ShinyAccountPage() {
           </Button>
         </Stack>
 
-        {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
+        {error && (
+          <Alert
+            severity={accountInactive ? 'warning' : 'error'}
+            onClose={() => {
+              setError('')
+              setAccountInactive(false)
+            }}
+          >
+            {error}
+
+            {accountInactive && shinyAccountHelpUrl && (
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  component="a"
+                  href={shinyAccountHelpUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                  size="small"
+                >
+                  Manage your account
+                </Button>
+              </Box>
+            )}
+          </Alert>
+        )}
+
         {notice && <Alert severity="success" onClose={() => setNotice('')}>{notice}</Alert>}
 
         {!auth.loggedIn ? (
@@ -231,7 +265,7 @@ export function ShinyAccountPage() {
                  <Alert severity="warning">
                    Your Shiny account is currently disabled.
                    Shiny notifications are suspended.
-               
+
                    {shinyAccountHelpUrl && (
                      <Box sx={{ mt: 1 }}>
                        <Button
