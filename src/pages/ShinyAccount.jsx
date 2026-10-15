@@ -51,6 +51,7 @@ const apiRequest = async (url, options = {}) => {
 }
 
 const dateText = (value) => (value ? new Date(value).toLocaleString() : '-')
+const shinyAccountHelpUrl = import.meta.env.VITE_SHINY_ACCOUNT_HELP_URL
 
 export function ShinyAccountPage() {
   const navigate = useNavigate()
@@ -226,11 +227,31 @@ export function ShinyAccountPage() {
 
               <Typography variant="h6">Friend code linked</Typography>
 
-              {typeof profile.enabled === 'boolean' && (
-                <Alert severity={profile.enabled ? 'success' : 'warning'}>
-                  {profile.enabled
-                    ? 'Your Shiny account is active.'
-                    : 'Your Shiny account is currently disabled. Shiny notifications are suspended.'}
+               {profile.enabled === false && (
+                 <Alert severity="warning">
+                   Your Shiny account is currently disabled.
+                   Shiny notifications are suspended.
+               
+                   {shinyAccountHelpUrl && (
+                     <Box sx={{ mt: 1 }}>
+                       <Button
+                         component="a"
+                         href={shinyAccountHelpUrl}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         variant="outlined"
+                         size="small"
+                       >
+                         Manage your account
+                       </Button>
+                     </Box>
+                   )}
+                 </Alert>
+               )}
+
+              {profile.enabled === true && (
+                <Alert severity="success">
+                  Your Shiny account is active.
                 </Alert>
               )}
 
