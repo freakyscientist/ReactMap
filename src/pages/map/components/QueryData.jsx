@@ -300,7 +300,14 @@ function QueryData({ category, timeout }) {
   const pokemonData =
     category === 'pokemon' && showShiniesOnly
       ? [
-          ...returnData,
+
+          ...returnData.filter((pokemon) =>
+            userShinies.some(
+              (shiny) =>
+                String(shiny.encounterId) === String(pokemon.encounter_id),
+            ),
+          ),
+
           ...userShinies
             .filter(
               (sighting) =>
