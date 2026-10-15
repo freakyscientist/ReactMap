@@ -187,9 +187,17 @@ export function ShinyAccountPage() {
               Link a friend code to receive personalized shiny notifications and map sightings.
             </Typography>
           </Box>
-          <IconButton aria-label="Refresh" onClick={loadData} disabled={loading}>
-            <Refresh />
-          </IconButton>
+          <Button
+            variant="outlined"
+            startIcon={
+              loading ? <CircularProgress size={16} /> : <Refresh />
+            }
+            onClick={loadData}
+            disabled={loading}
+            sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+          >
+            {loading ? 'Refreshing...' : 'Refresh status'}
+          </Button>
         </Stack>
 
         {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
@@ -215,8 +223,21 @@ export function ShinyAccountPage() {
         ) : profile?.linked ? (
           <Paper variant="outlined" sx={{ p: 3, maxWidth: 680 }}>
             <Stack spacing={1}>
+
               <Typography variant="h6">Friend code linked</Typography>
-              <Typography>Lookup status: {profile.status || 'pending'}</Typography>
+
+              {typeof profile.enabled === 'boolean' && (
+                <Alert severity={profile.enabled ? 'success' : 'warning'}>
+                  {profile.enabled
+                    ? 'Your Shiny account is active.'
+                    : 'Your Shiny account is currently disabled. Shiny notifications are suspended.'}
+                </Alert>
+              )}
+
+              <Typography>
+                Lookup status: {profile.status || 'pending'}
+              </Typography>
+
               <Typography>Player ID: {profile.playerId || 'Waiting for friend lookup'}</Typography>
               <Typography color="text.secondary">
                 This link is permanent for your account. Contact an administrator if it needs to be removed.
