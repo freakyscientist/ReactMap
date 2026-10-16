@@ -222,6 +222,7 @@ zoruaRouter.post('/profile/status', async (req, res) => {
   const identity = {
     discordId: req.user.discordId || '',
     telegramId: req.user.telegramId || '',
+    domain: req.hostname.toLowerCase(),
   }
   return requestZorua(res, `${zorua.url}/map/profile/status`, zorua.secret, {
     method: 'POST',
@@ -253,6 +254,7 @@ zoruaRouter.post('/profile', async (req, res) => {
       identityId,
       friendCode,
       label: req.user.username || identityId,
+      domain: req.hostname.toLowerCase(),
     }),
   })
 })

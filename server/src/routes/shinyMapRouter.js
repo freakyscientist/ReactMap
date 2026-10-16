@@ -73,6 +73,8 @@ shinyMapRouter.get('/', async (req, res) => {
   const identity = {
     ...(req.user.discordId ? { discordId: String(req.user.discordId) } : {}),
     ...(req.user.telegramId ? { telegramId: String(req.user.telegramId) } : {}),
+    // Zorua checks this host against its configured allowlist.
+    domain: req.hostname.toLowerCase(),
   }
   if (Object.keys(identity).length === 0) {
     log.warn(
