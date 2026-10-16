@@ -174,7 +174,11 @@ class TelegramClient extends AuthClient {
             const selectedWebhook = Object.keys(state.event.webhookObj).find(
               (x) => user?.perms?.webhooks.includes(x),
             )
-            if (req.user && userExists?.strategy === 'local') {
+            if (
+              !req.session?.zoruaPendingLink &&
+              req.user &&
+              userExists?.strategy === 'local'
+            ) {
               await state.db.models.User.query()
                 .update({
                   telegramId: user.id,
