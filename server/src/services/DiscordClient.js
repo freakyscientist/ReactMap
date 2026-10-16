@@ -329,7 +329,13 @@ class DiscordClient extends AuthClient {
       }
 
       await state.db.models.User.query()
-        .findOne(req.user ? { id: req.user.id } : { discordId: discordUser.id })
+        .findOne(
+          req.session?.zoruaPendingLink?.platform === 'discord'
+            ? { discordId: discordUser.id }
+            : req.user
+              ? { id: req.user.id }
+              : { discordId: discordUser.id },
+        )
         .then(
           async (/** @type {import('@rm/types').FullUser} */ userExists) => {
             const selectedWebhook = Object.keys(state.event.webhookObj).find(
