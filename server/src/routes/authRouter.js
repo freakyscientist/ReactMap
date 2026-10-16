@@ -7,6 +7,35 @@ const { log, TAGS } = require('@rm/logger')
 
 const { state } = require('../services/state')
 
+// Complete linking after the second provider has been verified by Passport.
+async function completeZoruaIdentityLink(req, user, strategy) {
+  const pending = req.session?.zoruaPendingLink
+  if (!pending) return null
+  delete req.session.zoruaPendingLink
+  if (pending.platform !== strategy.type || Date.now() > pending.expires) return 'expired'
+  const identityId = String(strategy.type === 'discord' ? user.discordId || '' : user.telegramId || '')
+  if (!/^\d{1,30}$/.test(identityId)) return 'invalid-provider'
+  const url = process.env.ZORUA_MAP_API_URL?.replace(/\/+$/, '')
+  const secret = process.env.ZORUA_MAP_API_SECRET
+  if (!url || !secret) return 'unavailable'
+  try {
+    const response = await fetch(`${url}/map/profile/link/finish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-ReactMap-Secret': secret },
+      body: JSON.stringify({ code: pending.code, platform: strategy.type, identityId }),
+      redirect: 'error', signal: AbortSignal.timeout(10000),
+    })
+    if (!response.ok) {
+      log.warn(TAGS.auth, `Zorua identity linking refused: HTTP ${response.status}`)
+      return 'failed'
+    }
+    return 'success'
+  } catch (error) {
+    log.error(TAGS.auth, 'Zorua identity linking callback failed', error)
+    return 'unavailable'
+  }
+}
+
 // Loads up the base auth routes and any custom ones
 
 const loadAuthStrategies = () => {
@@ -85,6 +114,7 @@ const loadAuthStrategies = () => {
               )
             } else {
               try {
+                const linkResult = await completeZoruaIdentityLink(req, user, strategy)
                 return req.login(user, async () => {
                   const { id } = user
                   if (!(await state.db.models.Session.isValidSession(id))) {
@@ -97,7 +127,7 @@ const loadAuthStrategies = () => {
                       req.sessionID,
                     )
                   }
-                  return res.redirect('/')
+                  return res.redirect(linkResult ? `/shiny-account?identityLink=${encodeURIComponent(linkResult)}` : '/')
                 })
               } catch (error) {
                 log.error(TAGS.auth, error)

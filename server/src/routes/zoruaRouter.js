@@ -300,6 +300,37 @@ zoruaRouter.post('/profile/link/finish', async (req, res) => {
   })
 })
 
+// The link token stays server-side while the browser completes OAuth.
+zoruaRouter.post('/profile/link/oauth', async (req, res) => {
+  if (!requireLogin(req, res)) return
+  const targetPlatform = req.body?.platform
+  const sourcePlatform = targetPlatform === 'telegram' ? 'discord' : targetPlatform === 'discord' ? 'telegram' : ''
+  if (!sourcePlatform) return res.status(400).json({ status: 'error', message: 'invalid platform' })
+  const identityId = String(sourcePlatform === 'discord' ? req.user.discordId || '' : req.user.telegramId || '')
+  if (!/^\d{1,30}$/.test(identityId)) return res.status(403).json({ status: 'error', message: 'source provider not verified' })
+  const zorua = getZoruaConfig(res)
+  if (!zorua) return
+  try {
+    const response = await fetch(`${zorua.url}/map/profile/link/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-ReactMap-Secret': zorua.secret },
+      body: JSON.stringify({ platform: sourcePlatform, identityId }),
+      redirect: 'error', signal: AbortSignal.timeout(10000),
+    })
+    const data = await response.json()
+    if (!response.ok || typeof data.code !== 'string') {
+      return res.status(response.status).json({ status: 'error', message: data.message || 'link unavailable' })
+    }
+    req.session.zoruaPendingLink = { code: data.code, platform: targetPlatform, expires: Date.now() + 600000 }
+    return req.session.save((err) => err
+      ? res.status(500).json({ status: 'error', message: 'session save failed' })
+      : res.json({ status: 'ok' }))
+  } catch (error) {
+    log.error(TAGS.api, 'Zorua OAuth linking failed to start', error)
+    return res.status(502).json({ status: 'error', message: 'link service unavailable' })
+  }
+})
+
 zoruaRouter.get('/users', (req, res) => {
   if (!requireLogin(req, res)) return
   if (!req.user.perms?.admin) {

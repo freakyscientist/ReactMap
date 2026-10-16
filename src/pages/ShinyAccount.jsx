@@ -72,6 +72,33 @@ export function ShinyAccountPage() {
   const [error, setError] = React.useState('')
   const [notice, setNotice] = React.useState('')
   const [accountInactive, setAccountInactive] = React.useState(false)
+  const [identityLoading, setIdentityLoading] = React.useState(false)
+  const discordAuthUrl = useMemory((s) => s.config.customRoutes.discordAuthUrl)
+  const telegramAuthUrl = useMemory((s) => s.config.customRoutes.telegramAuthUrl)
+
+  const beginIdentityLink = async (targetPlatform) => {
+    setError('')
+    setIdentityLoading(true)
+    try {
+      await apiRequest('/api/zorua/profile/link/oauth', {
+        method: 'POST', body: JSON.stringify({ platform: targetPlatform }),
+      })
+      const authUrl = targetPlatform === 'discord' ? discordAuthUrl : telegramAuthUrl
+      if (!authUrl || !authUrl.startsWith('/') || authUrl.startsWith('//')) throw new Error('Authentication URL unavailable')
+      window.location.assign(authUrl)
+    } catch (err) {
+      setError(err.message)
+      setIdentityLoading(false)
+    }
+  }
+
+  React.useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get('identityLink')
+    if (!status) return
+    if (status === 'success') setNotice('Your second login method has been linked successfully.')
+    else setError(`Account linking was not completed (${status}).`)
+    window.history.replaceState({}, '', '/shiny-account')
+  }, [])
 
   const availablePlatforms = [
     ...(auth.discordId ? [{ id: 'discord', label: 'Discord', value: auth.discordId }] : []),
@@ -344,6 +371,26 @@ export function ShinyAccountPage() {
                   </Button>
                 </>
               )}
+            </Stack>
+          </Paper>
+        )}
+
+        {auth.loggedIn && auth.perms.shinyAccount && (
+          <Paper variant="outlined" sx={{ p: 3, maxWidth: 680 }}>
+            <Stack spacing={2}>
+              <Typography variant="h6">Login methods</Typography>
+              <Typography color="text.secondary">Use Discord or Telegram with the same Pokémon GO friend code and Player ID. Only one ReactMap login is active at a time.</Typography>
+              <Typography>Current session: {auth.discordId ? 'Discord' : auth.telegramId ? 'Telegram' : 'Other'}</Typography>
+              {auth.discordId && <Typography>Discord: connected (ID {auth.discordId})</Typography>}
+              {auth.telegramId && <Typography>Telegram: connected (ID {auth.telegramId})</Typography>}
+              {profile?.linked && (
+                <>
+                  <Typography color="text.secondary">Linked to Zorua: Discord {profile.discordLinked ? 'Yes' : 'No'} · Telegram {profile.telegramLinked ? 'Yes' : 'No'}</Typography>
+                  {auth.discordId && !profile.telegramLinked && <Button disabled={identityLoading} variant="outlined" onClick={() => beginIdentityLink('telegram')}>Link Telegram</Button>}
+                  {auth.telegramId && !profile.discordLinked && <Button disabled={identityLoading} variant="outlined" onClick={() => beginIdentityLink('discord')}>Link Discord</Button>}
+                </>
+              )}
+              <Button href="/auth/logout" color="inherit" variant="outlined">Sign out of ReactMap</Button>
             </Stack>
           </Paper>
         )}
