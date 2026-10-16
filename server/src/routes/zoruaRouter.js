@@ -259,6 +259,47 @@ zoruaRouter.post('/profile', async (req, res) => {
   })
 })
 
+// Initiate linking from the account that already owns the Zorua profile.
+zoruaRouter.post('/profile/link/start', async (req, res) => {
+  if (!requireLogin(req, res)) return
+  const { platform } = req.body || {}
+  if (platform !== 'discord' && platform !== 'telegram') {
+    return res.status(400).json({ status: 'error', message: 'invalid platform' })
+  }
+  const identityId = String(platform === 'discord' ? req.user.discordId || '' : req.user.telegramId || '')
+  if (!/^\d{1,30}$/.test(identityId)) {
+    return res.status(403).json({ status: 'error', message: 'provider not verified in current session' })
+  }
+  const zorua = getZoruaConfig(res)
+  if (!zorua) return
+  return requestZorua(res, `${zorua.url}/map/profile/link/start`, zorua.secret, {
+    method: 'POST',
+    body: JSON.stringify({ platform, identityId }),
+  })
+})
+
+// Complete linking while authenticated with the other provider.
+zoruaRouter.post('/profile/link/finish', async (req, res) => {
+  if (!requireLogin(req, res)) return
+  const { platform, code } = req.body || {}
+  if (platform !== 'discord' && platform !== 'telegram') {
+    return res.status(400).json({ status: 'error', message: 'invalid platform' })
+  }
+  const identityId = String(platform === 'discord' ? req.user.discordId || '' : req.user.telegramId || '')
+  if (!/^\d{1,30}$/.test(identityId)) {
+    return res.status(403).json({ status: 'error', message: 'provider not verified in current session' })
+  }
+  if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(code)) {
+    return res.status(400).json({ status: 'error', message: 'invalid link code' })
+  }
+  const zorua = getZoruaConfig(res)
+  if (!zorua) return
+  return requestZorua(res, `${zorua.url}/map/profile/link/finish`, zorua.secret, {
+    method: 'POST',
+    body: JSON.stringify({ platform, identityId, code }),
+  })
+})
+
 zoruaRouter.get('/users', (req, res) => {
   if (!requireLogin(req, res)) return
   if (!req.user.perms?.admin) {
